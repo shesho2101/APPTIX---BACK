@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  name      String
+  email     String    @unique
+  password  String
+  role      Role
+  createdAt DateTime  @default(now())
+
+  restaurant  Restaurant?
+  favorites   Favorite[]
+}
+
+model Restaurant {
+  id          Int          @id @default(autoincrement())
+  name        String
+  description String?
+  phone       String?
+  address     String
+  city        String
+  userId      Int          @unique
+  createdAt   DateTime     @default(now())
+
+  user        User         @relation(fields: [userId], references: [id])
+  promotions  Promotion[]
+}
+
+model Promotion {
+  id           Int        @id @default(autoincrement())
+  title        String
+  description  String
+  discountType DiscountType
+  discountValue Float
+  startAt      DateTime
+  endAt        DateTime
+  status       PromotionStatus @default(ACTIVE)
+  createdAt    DateTime   @default(now())
+
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  restaurantId Int
+  favorites    Favorite[]
+}
+
+model Favorite {
+  id          Int        @id @default(autoincrement())
+  userId      Int
+  promotionId Int
+
+  user        User       @relation(fields: [userId], references: [id])
+  promotion   Promotion  @relation(fields: [promotionId], references: [id])
+
+  @@unique([userId, promotionId]) // Un usuario no puede guardar la misma promo dos veces
+}
+
+enum Role {
+  CUSTOMER
+  RESTAURANT
+  ADMIN
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED
+}
+
+enum PromotionStatus {
+  ACTIVE
+  EXPIRED
+}
